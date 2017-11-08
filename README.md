@@ -47,3 +47,8 @@ Example:
     .	MultiInstance	Processor	Counter	% Processor Time	Timer100NsInverse
     .	MultiInstance	Processor	Counter	% User Time	Timer100Ns
     .	MultiInstance	Processor	Counter	% Privileged Time	Timer100Ns
+    
+# Requisit
+ * Framework .Net 2.0 or more recent.
+ * The solution is based on Visual Studio 2012. But it will probably compile with any thing capable of compiling .Net 2.0 code.
+
