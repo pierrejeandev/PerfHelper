@@ -1,4 +1,9 @@
-﻿using System.Reflection;
+﻿/*
+MIT License (see LICENSE)
+Copyright (c) 2017 Pierre-Jean Deville / Umanis.com
+*/
+
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -8,9 +13,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Personalized performances collector template for your server")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Umanis / pdeville@umanis.com")]
+[assembly: AssemblyCompany("Pierre-Jean Deville / Umanis.com")]
 [assembly: AssemblyProduct("PerfHelper")]
-[assembly: AssemblyCopyright("Copyright Umanis © 2017")]
+[assembly: AssemblyCopyright("© Pierre-Jean Deville / Umanis.com 2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

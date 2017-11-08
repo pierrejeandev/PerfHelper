@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+MIT License (see LICENSE)
+Copyright (c) 2017 Pierre-Jean Deville / Umanis.com
+*/
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Text;
