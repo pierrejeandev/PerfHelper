@@ -1,11 +1,16 @@
 # PerfHelper
-Simple tool to generate Windows Performance Monitor templates
+Simple cli tool to generate Windows Performance Monitor templates customized for each machine.
+The purpose is to avoid repeated manual selection of counters, which can be a source of errors.
+
+This tool is useful when you have a limited number of servers you whish to monitor and you don't have fully featured monitoring software that include all the counters you need.
 
 This software is published under the MIT License (see LICENSE)
 
 # Use
 
-The tool create a perfmon template based on the configuration file. The configuration contains the template header and footer, and the list of counters to include. The template is customized and unique to each machine, as it contains only the counter that exists on each machine.
+The tool creates a perfmon template based on a configuration file. The configuration contains a selection of counters to include and the template created contains all counters that exists on the server and that are selected in the configuration file. This way, the template is adapted to each machine.
+
+The configuration file included with the sources contains counters for various service from the SQL Server suite. You can modify this configuration to match more closely your needs.
 
 1. Open a CMD as administrator
 2. Run PerfHelper and redirect output to a template xml file
