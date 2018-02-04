@@ -88,30 +88,6 @@ namespace PerfHelper.Config
         }
 
         /// <summary>
-        /// List of instance to be forced for w3wp processes FIXME: Not implemented yet
-        /// </summary>
-        [ConfigurationProperty("ForceInstancesW3wp", IsRequired = false, DefaultValue = "")]
-        public String ForceInstancesW3wp
-        {
-            get
-            {
-                return (String)this["ForceInstancesW3wp"];
-            }
-        }
-
-        /// <summary>
-        /// List of instance to be forced for DTExec processes FIXME: Not implemented yet
-        /// </summary>
-        [ConfigurationProperty("ForceInstancesDTExec", IsRequired = false, DefaultValue = "")]
-        public String ForceInstancesDTExec
-        {
-            get
-            {
-                return (String)this["ForceInstancesDTExec"];
-            }
-        }
-
-        /// <summary>
         /// Starting part of the XML template. This value is written first to the template.
         /// </summary>
         [ConfigurationProperty("XmlTemplateStart", IsRequired = true)]

@@ -20,13 +20,13 @@ namespace PerfHelper
         /// Main 
         /// </summary>
         /// <param name="args"></param>
-        static void Main(String[] args)
+        static int Main(String[] args)
         {
             // Check the executing user privilèges
             if (!IsUserAdministrator())
             {
                 Console.Error.WriteLine("This program to be run with administrative profilèges. \"Use Run as 'Administrator' option to launch the CMD window.\"");
-                return;
+                return 1;
             }
 
             // Check 1st argument
@@ -76,7 +76,7 @@ namespace PerfHelper
                     }
                 }
                 
-                return;
+                return 0;
                 // end of dump mode
             }
 
@@ -94,17 +94,23 @@ namespace PerfHelper
                 List<String> formatedCounters = new List<String>();
 
                 // Find counters for General System categories
-                SelectCounter(cats, conf.SystemCategories, "", formatedCounters);
+                if (!SelectCounter(cats, conf.SystemCategories, "", formatedCounters))
+                    return 2;
                 // Find counters for SQL server instances 
-                SelectCounter(cats, conf.MsSqlCategories, "", formatedCounters);
+                if (!SelectCounter(cats, conf.MsSqlCategories, "", formatedCounters))
+                    return 2;
                 // Find counters for SSAS
-                SelectCounter(cats, conf.SsasCategories, "", formatedCounters);
+                if (!SelectCounter(cats, conf.SsasCategories, "", formatedCounters))
+                    return 2;
                 // Find counters for SSIS
-                SelectCounter(cats, conf.SsisCategories, "", formatedCounters);
+                if (!SelectCounter(cats, conf.SsisCategories, "", formatedCounters))
+                    return 2;
                 // Find counters for SSRS
-                SelectCounter(cats, conf.SsrsCategories, "", formatedCounters);
+                if (!SelectCounter(cats, conf.SsrsCategories, "", formatedCounters))
+                    return 2;
                 // Find counters for Asp.net
-                SelectCounter(cats, conf.AspNetCategories, "", formatedCounters);
+                if (!SelectCounter(cats, conf.AspNetCategories, "", formatedCounters))
+                    return 2;
 
                 // Sort counters
                 formatedCounters.Sort();
@@ -117,7 +123,9 @@ namespace PerfHelper
                 }
                 Console.Out.Write(conf.XmlTemplateEnd);
             }
+            return 0;
         }
+
 
         /// <summary>
         /// Select counters from a configured list of categories and instances
@@ -126,8 +134,9 @@ namespace PerfHelper
         /// <param name="confCategories">List of configured categories</param>
         /// <param name="instanceName">not used</param>
         /// <param name="formatedCounters">list to output found counters, formated for the template</param>
-        private static void SelectCounter(PerformanceCounterCategory[] osCategories, Config.CategoryCollection confCategories, String instanceName, List<String> formatedCounters)
+        private static Boolean SelectCounter(PerformanceCounterCategory[] osCategories, Config.CategoryCollection confCategories, String instanceName, List<String> formatedCounters)
         {
+
             // Nested loops over system counters and over configured counters
             foreach (PerformanceCounterCategory osCategorie in osCategories)
             {
@@ -142,6 +151,24 @@ namespace PerfHelper
 
                         // Local pre-selected list of counters
                         List<PerformanceCounter> counters = new List<PerformanceCounter>();
+
+                        // Variables for the additional process feature
+                        Boolean doAdditionnalProcesses = !(String.IsNullOrEmpty(confCategories.AdditionalProcessTriggerName) || String.IsNullOrEmpty(confCategories.AdditionalProcessList))
+                             && osCategorie.CategoryName == "Process";
+                        Boolean additionnalProcessesTriggerFound = false;
+                        Dictionary<String, Boolean> additionalProcessFound = null;
+                        if (doAdditionnalProcesses)
+                        {
+                            if (!confCategorie.InstancesRe.IsMatch(confCategories.AdditionalProcessTriggerName))
+                            {
+                                Console.Error.WriteLine(String.Concat("ERROR: Configuration issue: the AdditionalProcessTriggerName '", confCategories.AdditionalProcessTriggerName,
+                                    "'  is not matched by the Process category instance RegEx '", confCategorie.Instances, "'. Please add '|", confCategories.AdditionalProcessTriggerName, ".*' to the RegEx"));
+                                return false;
+                            }
+                            additionalProcessFound = new Dictionary<String, Boolean>();
+                            foreach (String process in confCategories.AdditionalProcessList.Split(new char[] { ',' }))
+                                additionalProcessFound.Add(process, false);
+                        }
 
                         // Load list of counters for this category: this depends on the instance name for multininstances
                         if (osCategorie.CategoryType == PerformanceCounterCategoryType.MultiInstance)
@@ -163,6 +190,15 @@ namespace PerfHelper
                                         // add counter to pre-selected list
                                         counters.AddRange(osCategorie.GetCounters(instance));
                                         confCategorie.InstanceFound = true;
+
+                                        if (doAdditionnalProcesses && additionalProcessFound.ContainsKey(instance))
+                                            additionalProcessFound[instance] = true;
+                                    }
+
+                                    // Additionnal processes : detect trigger
+                                    if(doAdditionnalProcesses && (!additionnalProcessesTriggerFound) && instance == confCategories.AdditionalProcessTriggerName)
+                                    {
+                                        additionnalProcessesTriggerFound = true;  
                                     }
                                 }
                             }
@@ -173,7 +209,8 @@ namespace PerfHelper
                             if (confCategorie.Instances != "")
                             {
                                 // config issue
-                                Console.Error.WriteLine(String.Concat("Incoherent configuration for category '", osCategorie.CategoryName, "' (matched by '", confCategorie.Name, "'): This category has only one instance, but an instance selector was specified: '", confCategorie.Instances, "'."));
+                                Console.Error.WriteLine(String.Concat("ERROR: Incoherent configuration for category '", osCategorie.CategoryName, "' (matched by '", confCategorie.Name, "'): This category has only one instance, but an instance selector was specified: '", confCategorie.Instances, "'."));
+                                return false;
                             }
                             else
                             {
@@ -182,6 +219,10 @@ namespace PerfHelper
                                 counters.AddRange(osCategorie.GetCounters());
                             }
                         }
+                        // Variables for the additional process feature
+                        Dictionary<String, Boolean> additionalProcessCounterAdded = null;
+                        if (doAdditionnalProcesses && additionnalProcessesTriggerFound)
+                            additionalProcessCounterAdded = new Dictionary<String, Boolean>();
 
                         // Nested loop over counters pre-selected list, and over counters from the configuration
                         foreach (PerformanceCounter counter in counters)
@@ -198,6 +239,21 @@ namespace PerfHelper
                                         formatedCounters.Add(String.Concat("		<Counter>\\",
                                             String.Concat(osCategorie.CategoryName, "(", counter.InstanceName, ")\\", counter.CounterName).Replace("&", "&amp;").Replace(">", "&gt;").Replace("<", "&lt;"),
                                             "</Counter>"));
+
+                                        if (doAdditionnalProcesses && additionnalProcessesTriggerFound)
+                                        {
+                                            foreach (String instance in additionalProcessFound.Keys)
+                                            {
+                                                String instanceCounter = String.Concat(instance, "|", counter.CounterName);
+                                                if (!additionalProcessFound[instance] && !additionalProcessCounterAdded.ContainsKey(instanceCounter))
+                                                {
+                                                    formatedCounters.Add(String.Concat("		<Counter>\\",
+                                                       String.Concat(osCategorie.CategoryName, "(", instance, ")\\", counter.CounterName).Replace("&", "&amp;").Replace(">", "&gt;").Replace("<", "&lt;"),
+                                                       "</Counter>"));
+                                                    additionalProcessCounterAdded[instanceCounter] = true;
+                                                }
+                                            }
+                                        }
                                     }
                                     else
                                     {
@@ -247,6 +303,7 @@ namespace PerfHelper
                     }
                 }
             }
+            return true;
         }
 
         /// <summary>

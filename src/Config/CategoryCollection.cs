@@ -54,6 +54,30 @@ namespace PerfHelper.Config
         protected override object GetElementKey(ConfigurationElement element)
         {
             return ((Category)element).Name;
-        } 
+        }
+
+        /// <summary>
+        /// Name of the process that will trigger the additionnal processes when present
+        /// </summary>
+        [ConfigurationProperty("AdditionalProcessTriggerName", IsRequired = false, DefaultValue = "")]
+        public String AdditionalProcessTriggerName
+        {
+            get
+            {
+                return (String)this["AdditionalProcessTriggerName"];
+            }
+        }
+
+        /// <summary>
+        /// List of additionnal processes to monitor
+        /// </summary>
+        [ConfigurationProperty("AdditionalProcessList", IsRequired = false, DefaultValue = "")]
+        public String AdditionalProcessList
+        {
+            get
+            {
+                return (String)this["AdditionalProcessList"];
+            }
+        }
     }
 }
